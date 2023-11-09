@@ -1,27 +1,72 @@
 // screens/PresencePage.jsx
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  Box,
-  Button,
-  Text,
-  Heading,
-  Image,
-  VStack,
-  HStack,
-  Container,
-  Divider,
-  useColorModeValue,
-} from '@chakra-ui/react';
+    Box,
+    Button,
+    Text,
+    Heading,
+    Image,
+    VStack,
+    Container,
+    Divider,
+    useColorModeValue,
+    Modal,
+    ModalOverlay,
+    ModalContent,
+    ModalHeader,
+    ModalFooter,
+    ModalBody,
+    ModalCloseButton,
+    useDisclosure
+  } from '@chakra-ui/react';
 // Importez les icônes ou images nécessaires
 
 export default function PresencePage() {
   // Fonction pour gérer l'émargement par reconnaissance faciale
-  const handleFacialRecognition = () => {
-    // Implémentation de la reconnaissance faciale
-  };
 
   // Style pour les boîtes de cours
   const courseBoxBg = useColorModeValue('gray.100', 'gray.700');
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const videoRef = useRef(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+  const startVideo = () => {
+    navigator.mediaDevices.getUserMedia({ video: {} })
+      .then(stream => {
+        let video = videoRef.current;
+        video.srcObject = stream;
+        video.play();
+        setIsVideoPlaying(true);
+      })
+      .catch(err => {
+        console.error("error:", err);
+      });
+  };
+
+  const stopVideo = () => {
+    const stream = videoRef.current.srcObject;
+    const tracks = stream.getTracks();
+
+    tracks.forEach(function(track) {
+      track.stop();
+    });
+
+    videoRef.current.srcObject = null;
+    setIsVideoPlaying(false);
+  };
+
+  const handleEmargementClick = () => {
+    onOpen();
+    startVideo();
+  };
+
+  const handleClose = () => {
+    onClose();
+    stopVideo();
+  };
+
+
 
   return (
     <Container maxW="container.xl" p={4}>
@@ -57,11 +102,26 @@ export default function PresencePage() {
         <Button
           colorScheme="teal"
           size="lg"
-          onClick={handleFacialRecognition}
+          onClick={handleEmargementClick}
         >
           Émarger Maintenant
         </Button>
-
+        {/* Modal pour la webcam */}
+        <Modal isOpen={isOpen} onClose={handleClose} size="xl">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Webcam</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <video ref={videoRef} width="100%" height="auto" />
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="blue" mr={3} onClick={handleClose}>
+                Fermer
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
         {/* ... Autres composants ... */}
       </VStack>
     </Container>
