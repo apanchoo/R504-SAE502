@@ -17,6 +17,7 @@
     "@faceio/fiojs": "^1.1.0",
     "face-api.js": "^0.22.2",
     "framer-motion": "^10.16.4",
+    "mongodb": "^6.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icon": "^1.0.0",

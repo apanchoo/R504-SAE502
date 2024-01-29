@@ -1,15 +1,17 @@
 // ProfPage.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Heading, Table, Thead, Tbody, Tr, Th, Td, Badge } from '@chakra-ui/react';
 
-const students = [
-  { id: 1, name: 'Alice', present: true },
-  { id: 2, name: 'Bob', present: false },
-  { id: 3, name: 'Charlie', present: null }, // null représente "Pas encore signé"
-  // Ajoutez d'autres élèves ici
-];
-
 const ProfPage = () => {
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/emargements')
+      .then(response => response.json())
+      .then(data => setStudents(data))
+      .catch(error => console.error('Erreur lors de la récupération des données:', error));
+  }, []);
+
   const getStatusBadge = (present) => {
     if (present === true) {
       return <Badge colorScheme="green">Présent</Badge>;
@@ -28,6 +30,7 @@ const ProfPage = () => {
           <Tr>
             <Th>Nom</Th>
             <Th>Statut</Th>
+            <Th>Date d'Émargement</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -35,6 +38,7 @@ const ProfPage = () => {
             <Tr key={student.id}>
               <Td>{student.name}</Td>
               <Td>{getStatusBadge(student.present)}</Td>
+              <Td>{student.date}</Td>
             </Tr>
           ))}
         </Tbody>
@@ -42,5 +46,6 @@ const ProfPage = () => {
     </Box>
   );
 };
+
 
 export default ProfPage;

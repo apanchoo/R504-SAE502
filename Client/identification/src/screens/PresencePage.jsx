@@ -1,70 +1,67 @@
 // screens/PresencePage.jsx
-import React, { useRef, useState } from 'react';
-
+import React, { useState } from 'react';
 import {
-    Box,
-    Button,
-    Text,
-    Heading,
-    Image,
-    VStack,
-    Container,
-    Divider,
-    useColorModeValue,
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalFooter,
-    ModalBody,
-    ModalCloseButton,
-    useDisclosure
-  } from '@chakra-ui/react';
-// Importez les icônes ou images nécessaires
+  Box, Button, Text, Heading, Image, VStack, Container, Divider, useColorModeValue,
+  useToast, Spinner
+} from '@chakra-ui/react';
+import faceIO from '@faceio/fiojs'; // Assurez-vous d'avoir installé @faceio/fiojs
 
 export default function PresencePage() {
-  // Fonction pour gérer l'émargement par reconnaissance faciale
-
-  // Style pour les boîtes de cours
   const courseBoxBg = useColorModeValue('gray.100', 'gray.700');
+  const toast = useToast();
+  const [isLoading, setIsLoading] = useState(false); // Nouvel état pour le chargement
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const videoRef = useRef(null);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const handleEmargementClick = async () => {
+    setIsLoading(true);
+    try {
+      const faceio = new faceIO('fioa4a2a');
+      const userInfo = await faceio.authenticate({ locale: "fr" });
 
-  const startVideo = () => {
-    navigator.mediaDevices.getUserMedia({ video: {} })
-      .then(stream => {
-        let video = videoRef.current;
-        video.srcObject = stream;
-        video.play();
-        setIsVideoPlaying(true);
-      })
-      .catch(err => {
-        console.error("error:", err);
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const gps_position = `${position.coords.latitude}, ${position.coords.longitude}`;
+        const date = new Date().toISOString();
+
+        const response = await fetch('http://localhost:3000/emargement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ faceio_id: userInfo.facialId, date, gps_position })
+        });
+
+        if (response.ok) {
+          toast({
+            title: "Émargement réussi",
+            description: "Votre présence a été enregistrée avec succès.",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setIsLoading(false);
+        } else {
+          throw new Error('Échec de l\'émargement');
+        }
+
+      }, (err) => {
+        console.error(err);
+        toast({
+          title: "Erreur de localisation",
+          description: "Impossible de récupérer la position GPS.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
       });
-  };
 
-  const stopVideo = () => {
-    const stream = videoRef.current.srcObject;
-    const tracks = stream.getTracks();
-
-    tracks.forEach(function(track) {
-      track.stop();
-    });
-
-    videoRef.current.srcObject = null;
-    setIsVideoPlaying(false);
-  };
-
-  const handleEmargementClick = () => {
-    onOpen();
-    startVideo();
-  };
-
-  const handleClose = () => {
-    onClose();
-    stopVideo();
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Échec de l'authentification",
+        description: "L'authentification a échoué.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      setIsLoading(false);
+    }
   };
 
 
@@ -100,29 +97,12 @@ export default function PresencePage() {
         </Box>
 
         {/* Bouton pour l'émargement */}
-        <Button
-          colorScheme="teal"
-          size="lg"
-          onClick={handleEmargementClick}
-        >
+        <Button isDisabled={isLoading} colorScheme="teal" size="lg" onClick={handleEmargementClick} >
           Émarger Maintenant
         </Button>
+        {isLoading && <Spinner />}
         {/* Modal pour la webcam */}
-        <Modal isOpen={isOpen} onClose={handleClose} size="xl">
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Webcam</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <video ref={videoRef} width="100%" height="auto" />
-            </ModalBody>
-            <ModalFooter>
-              <Button colorScheme="blue" mr={3} onClick={handleClose}>
-                Fermer
-              </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+
         {/* ... Autres composants ... */}
       </VStack>
     </Container>
