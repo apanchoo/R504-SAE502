@@ -31,7 +31,8 @@ export default function LoginPage() {
 
   const handleLoginSuccess = () => {
     // Après une connexion réussie
-    navigate('/presence');
+    //navigate('/presence');
+    navigate('/select-role');
   };
 
   return (
