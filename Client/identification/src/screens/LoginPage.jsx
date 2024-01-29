@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ChakraProvider,
   Box,
@@ -17,25 +17,45 @@ import {
   theme,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import faceIO from '@faceio/fiojs';
+import { FaMoon, FaSun } from 'react-icons/fa';
 
-import { FaMoon, FaSun } from 'react-icons/fa'; // Assurez-vous d'installer react-icons
+const faceio = new faceIO('fioa4a2a'); // Remplacez avec votre Project ID de FaceIO
 
 export default function LoginPage() {
   const { colorMode, toggleColorMode } = useColorMode();
-  const [showPassword, setShowPassword] = React.useState(false);
-
-  const handleShowClick = () => setShowPassword(!showPassword);
-
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  // ... useState et autres hooks
 
-  const handleLoginSuccess = () => {
-    // Après une connexion réussie
-    //navigate('/presence');
-    navigate('/select-role');
+  const handleShowClick = () => setShowPassword(!showShowPassword);
+  const handleLoginSuccess = () => navigate('/select-role');
+
+  const enrollNewUser = async () => {
+    try {
+      const userInfo = await faceio.enroll({
+        locale: "fr", // Ou "auto" pour la détection automatique de la langue
+      });
+      console.log("Utilisateur inscrit avec succès:", userInfo);
+      handleLoginSuccess(); // Naviguez ou gérez l'inscription réussie
+    } catch (errCode) {
+      console.error("Erreur lors de l'inscription:", errCode);
+    }
+  };
+
+  const authenticateUser = async () => {
+    try {
+      const userData = await faceio.authenticate({
+        locale: "fr", // Ou "auto"
+      });
+      console.log("Utilisateur authentifié avec succès:", userData);
+      handleLoginSuccess(); // Naviguez ou gérez l'authentification réussie
+    } catch (errCode) {
+      console.error("Erreur lors de l'authentification:", errCode);
+    }
   };
 
   return (
+    <ChakraProvider theme={theme}>
       <Box minH="100vh" bg={colorMode === 'dark' ? 'gray.800' : 'gray.100'}>
         <Flex align="center" justify="center" height="100vh">
           <Stack spacing={8} mx="auto" maxW="lg" py={12} px={6}>
@@ -55,37 +75,20 @@ export default function LoginPage() {
             </Stack>
             <Box rounded="lg" bg={colorMode === 'dark' ? 'gray.700' : 'white'} boxShadow="lg" p={8}>
               <Stack spacing={4}>
-                <FormControl id="email">
-                  <FormLabel color={colorMode === 'dark' ? 'gray.200' : 'gray.700'}>Adresse email</FormLabel>
-                  <Input type="email" required />
-                </FormControl>
-                <FormControl id="password">
-                  <FormLabel color={colorMode === 'dark' ? 'gray.200' : 'gray.700'}>Mot de passe</FormLabel>
-                  <InputGroup>
-                    <Input type={showPassword ? 'text' : 'password'} required />
-                    <InputRightElement width="4.5rem">
-                      <Button h="1.75rem" size="sm" onClick={handleShowClick}>
-                        {showPassword ? 'Cacher' : 'Montrer'}
-                      </Button>
-                    </InputRightElement>
-                  </InputGroup>
-                </FormControl>
-                <Stack spacing={10}>
-                  <Button
-                  onClick={handleLoginSuccess}
-                    bg="blue.400"
-                    color="white"
-                    _hover={{
-                      bg: 'blue.500',
-                    }}>
-                    Connexion
-                  </Button>
-                </Stack>
+                {/* Autres éléments du formulaire si nécessaire */}
+              </Stack>
+              <Stack spacing={6}>
+                <Button onClick={authenticateUser} bg="green.400" color="white" _hover={{ bg: 'green.500' }}>
+                  Connexion avec FaceIO
+                </Button>
+                <Button onClick={enrollNewUser} bg="blue.400" color="white" _hover={{ bg: 'blue.500' }}>
+                  S'inscrire avec FaceIO
+                </Button>
               </Stack>
             </Box>
           </Stack>
         </Flex>
       </Box>
-   
+    </ChakraProvider>
   );
 }
